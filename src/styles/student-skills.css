@@ -1,0 +1,259 @@
+/* Student Skills page: dedicated styling */
+
+.ss-page {
+  min-height: calc(100vh - 72px);
+  padding: 34px 30px 54px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(99, 102, 241, 0.13) 0%, transparent 35%),
+    radial-gradient(circle at 92% 100%, rgba(6, 182, 212, 0.12) 0%, transparent 30%),
+    linear-gradient(145deg, #f0f4ff 0%, #e8f0fe 25%, #f5f3ff 50%, #faf5ff 75%, #fff1f2 100%);
+}
+
+.ss-container {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.ss-header {
+  margin-bottom: 22px;
+}
+
+.ss-back-btn {
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #374151;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ss-back-btn:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.18);
+}
+
+.ss-header h2 {
+  margin: 14px 0 4px;
+  color: #0f172a;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  letter-spacing: -0.03em;
+}
+
+.ss-header p {
+  margin: 0;
+  color: #475569;
+}
+
+.ss-top-stats {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ss-top-stat {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.ss-top-stat span {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.ss-top-stat strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.ss-loading,
+.ss-empty-state {
+  margin-top: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.14);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  padding: 34px 24px;
+  text-align: center;
+}
+
+.ss-loading p,
+.ss-empty-state p {
+  color: #475569;
+}
+
+.ss-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid #dbeafe;
+  border-top-color: #3b82f6;
+  margin: 0 auto 10px;
+  animation: ssSpin 0.8s linear infinite;
+}
+
+@keyframes ssSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ss-empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.ss-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ss-btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
+}
+
+.ss-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.3);
+}
+
+.ss-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ss-summary-card {
+  border-radius: 15px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.ss-summary-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ss-summary-card p {
+  margin: 9px 0 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.ss-summary-card.strong {
+  border-top: 4px solid #10b981;
+}
+
+.ss-summary-card.moderate {
+  border-top: 4px solid #f59e0b;
+}
+
+.ss-summary-card.weak {
+  border-top: 4px solid #ef4444;
+}
+
+.ss-career-card {
+  margin-top: 12px;
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(120deg, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.09);
+}
+
+.ss-career-card h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.ss-career-card p {
+  margin: 8px 0 16px;
+  color: #475569;
+}
+
+.ss-skill-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.ss-skill-card {
+  border-radius: 15px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.ss-skill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ss-skill-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.15rem;
+}
+
+.ss-skill-percent {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.ss-skill-meta {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.ss-progress-track {
+  margin-top: 10px;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.ss-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+@media (max-width: 980px) {
+  .ss-top-stats,
+  .ss-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .ss-page {
+    padding: 24px 16px 40px;
+  }
+}

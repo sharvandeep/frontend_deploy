@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStudentHistory } from "../services/api";
 import "../styles/studentdashboard.css";
@@ -14,28 +14,88 @@ import {
   ResponsiveContainer
 } from "recharts";
 
+// Section IDs in order they appear on the page (defined outside component to avoid re-creation)
+const SECTION_IDS = ['profile', 'stats', 'performance', 'skills', 'actions', 'history'];
+
 export default function StudentDashboard() {
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const user = useMemo(() => JSON.parse(localStorage.getItem("user")) || {}, []);
 
   const [history, setHistory] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const wrapperRef = useRef(null);
+  const sectionsRef = useRef([]);
 
-  // Scroll progress tracker
+  // Scroll progress tracker with section detection (rAF-throttled)
   useEffect(() => {
-    const handleScroll = () => {
+    let animationFrame;
+    let isTicking = false;
+
+    sectionsRef.current = SECTION_IDS.map((id) => document.querySelector(`[data-section="${id}"]`));
+
+    const updateOnScroll = () => {
       if (!wrapperRef.current) return;
+
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      setScrollProgress(Math.min(progress, 100));
+      const targetProgress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+
+      const safeProgress = Math.min(targetProgress, 100);
+      setScrollProgress((prev) => (Math.abs(prev - safeProgress) > 0.1 ? safeProgress : prev));
+
+      // Detect active section - improved logic for bottom of page
+      const sections = sectionsRef.current;
+      const viewportCenter = window.innerHeight / 2;
+
+      let activeIndex = 0;
+      let foundInCenter = false;
+
+      // First, check if any section is centered in viewport
+      sections.forEach((section, index) => {
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= viewportCenter && rect.bottom >= viewportCenter) {
+            activeIndex = index;
+            foundInCenter = true;
+          }
+        }
+      });
+
+      // If no section is centered (e.g., at bottom of page), find the last section that's visible
+      if (!foundInCenter) {
+        for (let i = sections.length - 1; i >= 0; i--) {
+          const section = sections[i];
+          if (section) {
+            const rect = section.getBoundingClientRect();
+            // Section is visible (at least partially in viewport)
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+              activeIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      setActiveSectionIndex((prev) => (prev === activeIndex ? prev : activeIndex));
+      isTicking = false;
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handleScroll = () => {
+      if (isTicking) return;
+      isTicking = true;
+      animationFrame = requestAnimationFrame(updateOnScroll);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    updateOnScroll(); // Initial call
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationFrame);
+    };
   }, []);
 
   const [stats, setStats] = useState({
@@ -45,72 +105,68 @@ export default function StudentDashboard() {
     latest: 0
   });
 
-  useEffect(() => {
+  // Load dashboard data function
+  const loadDashboardData = useCallback(async () => {
+    if (!user?.id) return;
 
-    const loadDashboardData = async () => {
+    try {
+      const res = await getStudentHistory(user.id);
+      const data = res.data;
 
-      if (!user?.id) return;
+      setHistory(data);
 
-      try {
+      if (data.length > 0) {
+        const totalAttempts = data.length;
+        const average = data.reduce((sum, item) => sum + item.percentage, 0) / totalAttempts;
+        const best = Math.max(...data.map(item => item.percentage));
+        const latest = data[0].percentage;
 
-        const res = await getStudentHistory(user.id);
-        const data = res.data;
+        setStats({
+          total: totalAttempts,
+          average: average.toFixed(2),
+          best: best.toFixed(2),
+          latest: latest.toFixed(2)
+        });
 
-        setHistory(data);
+        const formatted = data.map((item, index) => ({
+          name: `Attempt ${index + 1}`,
+          percentage: item.percentage
+        }));
 
-        if (data.length > 0) {
-
-          const totalAttempts = data.length;
-
-          const average =
-            data.reduce((sum, item) => sum + item.percentage, 0) / totalAttempts;
-
-          const best = Math.max(...data.map(item => item.percentage));
-
-          const latest = data[0].percentage;
-
-          setStats({
-            total: totalAttempts,
-            average: average.toFixed(2),
-            best: best.toFixed(2),
-            latest: latest.toFixed(2)
-          });
-
-          const formatted = data.map((item, index) => ({
-            name: `Attempt ${index + 1}`,
-            percentage: item.percentage
-          }));
-
-          setChartData(formatted.reverse());
-        }
-
-      } catch (error) {
-        console.error("Dashboard Load Error:", error);
+        setChartData(formatted.reverse());
+      } else {
+        // Reset stats if no data
+        setStats({ total: 0, average: 0, best: 0, latest: 0 });
+        setChartData([]);
       }
-    };
-
-    loadDashboardData();
-
+    } catch (error) {
+      console.error("Dashboard Load Error:", error);
+    }
   }, [user?.id]);
 
-  // Milestone data for the journey
+  // Load data on mount
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Milestone data for the journey with section IDs
   const milestones = [
-    { icon: '👤', label: 'Profile', color: '#6366f1' },
-    { icon: '📊', label: 'Statistics', color: '#8b5cf6' },
-    { icon: '📈', label: 'Progress', color: '#a855f7' },
-    { icon: '🎯', label: 'Skills', color: '#06b6d4' },
-    { icon: '📝', label: 'Assess', color: '#10b981' },
-    { icon: '🏆', label: 'Results', color: '#f59e0b' },
-    { icon: '📜', label: 'History', color: '#ec4899' }
+    { icon: '👤', label: 'Profile', color: '#6366f1', section: 'profile' },
+    { icon: '📊', label: 'Statistics', color: '#8b5cf6', section: 'stats' },
+    { icon: '📈', label: 'Progress', color: '#a855f7', section: 'performance' },
+    { icon: '🎯', label: 'Skills', color: '#06b6d4', section: 'skills' },
+    { icon: '📝', label: 'Assess', color: '#10b981', section: 'actions' },
+    { icon: '🏆', label: 'Results', color: '#f59e0b', section: 'actions' },
+    { icon: '📜', label: 'History', color: '#ec4899', section: 'history' }
   ];
 
-  // Generate particles based on scroll
-  const particles = Array.from({ length: 12 }, (_, i) => ({
-    id: i,
-    delay: i * 0.3,
-    size: 4 + (i % 3) * 2,
-    offset: (i % 4) * 15
-  }));
+  // Scroll to section handler
+  const scrollToSection = (sectionId) => {
+    const element = document.querySelector(`[data-section="${sectionId}"]`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
   return (
     <div className="sd-wrapper" ref={wrapperRef}>
@@ -124,211 +180,46 @@ export default function StudentDashboard() {
         <div className="floating-shape shape-5" style={{ transform: `translateY(${scrollProgress * 1.5}px)` }}></div>
       </div>
 
-      {/* Enhanced Journey Roadmap Path */}
+      {/* Simplified Journey Roadmap */}
       <div className="sd-journey-path">
-        <svg className="journey-svg" viewBox="0 0 100 2400" preserveAspectRatio="none">
-          <defs>
-            {/* Main gradient */}
-            <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#6366f1" />
-              <stop offset="25%" stopColor="#8b5cf6" />
-              <stop offset="50%" stopColor="#a855f7" />
-              <stop offset="75%" stopColor="#06b6d4" />
-              <stop offset="100%" stopColor="#10b981" />
-            </linearGradient>
-            {/* Glow gradient */}
-            <linearGradient id="glowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
-              <stop offset="50%" stopColor="#a855f7" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
-            </linearGradient>
-            {/* Animated dash gradient */}
-            <linearGradient id="dashGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-            </linearGradient>
-            {/* Glow filter */}
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-            {/* Outer glow */}
-            <filter id="outerGlow" x="-100%" y="-100%" width="300%" height="300%">
-              <feGaussianBlur stdDeviation="8" result="blur"/>
-              <feFlood floodColor="#6366f1" floodOpacity="0.5"/>
-              <feComposite in2="blur" operator="in"/>
-              <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          {/* Background track (faded) */}
-          <path
-            className="journey-track"
-            d="M 50 0 
-               C 90 100, 10 200, 50 300 
-               C 90 400, 10 500, 50 600 
-               C 90 700, 10 800, 50 900 
-               C 90 1000, 10 1100, 50 1200 
-               C 90 1300, 10 1400, 50 1500 
-               C 90 1600, 10 1700, 50 1800 
-               C 90 1900, 10 2000, 50 2100 
-               C 90 2200, 10 2300, 50 2400"
-            fill="none"
-            stroke="rgba(99, 102, 241, 0.1)"
-            strokeWidth="8"
-            strokeLinecap="round"
-          />
-          
-          {/* Glow layer */}
-          <path
-            className="journey-glow-path"
-            d="M 50 0 
-               C 90 100, 10 200, 50 300 
-               C 90 400, 10 500, 50 600 
-               C 90 700, 10 800, 50 900 
-               C 90 1000, 10 1100, 50 1200 
-               C 90 1300, 10 1400, 50 1500 
-               C 90 1600, 10 1700, 50 1800 
-               C 90 1900, 10 2000, 50 2100 
-               C 90 2200, 10 2300, 50 2400"
-            fill="none"
-            stroke="url(#glowGradient)"
-            strokeWidth="20"
-            strokeLinecap="round"
-            filter="url(#outerGlow)"
-            style={{ 
-              strokeDasharray: 2600,
-              strokeDashoffset: 2600 - (scrollProgress * 26)
-            }}
-          />
-          
-          {/* Main animated path */}
-          <path
-            className="journey-line-main"
-            d="M 50 0 
-               C 90 100, 10 200, 50 300 
-               C 90 400, 10 500, 50 600 
-               C 90 700, 10 800, 50 900 
-               C 90 1000, 10 1100, 50 1200 
-               C 90 1300, 10 1400, 50 1500 
-               C 90 1600, 10 1700, 50 1800 
-               C 90 1900, 10 2000, 50 2100 
-               C 90 2200, 10 2300, 50 2400"
-            fill="none"
-            stroke="url(#pathGradient)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            filter="url(#glow)"
-            style={{ 
-              strokeDasharray: 2600,
-              strokeDashoffset: 2600 - (scrollProgress * 26)
-            }}
-          />
-          
-          {/* Inner bright line */}
-          <path
-            className="journey-line-inner"
-            d="M 50 0 
-               C 90 100, 10 200, 50 300 
-               C 90 400, 10 500, 50 600 
-               C 90 700, 10 800, 50 900 
-               C 90 1000, 10 1100, 50 1200 
-               C 90 1300, 10 1400, 50 1500 
-               C 90 1600, 10 1700, 50 1800 
-               C 90 1900, 10 2000, 50 2100 
-               C 90 2200, 10 2300, 50 2400"
-            fill="none"
-            stroke="white"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeOpacity="0.6"
-            style={{ 
-              strokeDasharray: 2600,
-              strokeDashoffset: 2600 - (scrollProgress * 26)
-            }}
-          />
-        </svg>
+        {/* Simple vertical line */}
+        <div className="journey-line-simple"></div>
         
-        {/* Floating Particles along path */}
-        <div className="journey-particles">
-          {particles.map((particle) => {
-            const isVisible = scrollProgress > particle.delay * 8;
-            return (
-              <div
-                key={particle.id}
-                className={`journey-particle ${isVisible ? 'visible' : ''}`}
-                style={{
-                  top: `${5 + (particle.id * 12)}%`,
-                  left: `${30 + particle.offset}px`,
-                  width: `${particle.size}px`,
-                  height: `${particle.size}px`,
-                  animationDelay: `${particle.delay}s`,
-                  opacity: isVisible ? 0.8 : 0
-                }}
-              />
-            );
-          })}
-        </div>
-        
-        {/* Enhanced Milestone Nodes */}
+        {/* Milestone Nodes */}
         <div className="journey-milestones">
           {milestones.map((milestone, index) => {
-            const nodeProgress = (index / (milestones.length - 1)) * 100;
-            const isActive = scrollProgress >= nodeProgress - 5;
-            const isPassed = scrollProgress > nodeProgress + 8;
-            const distanceFromActive = Math.abs(scrollProgress - nodeProgress);
-            const isNear = distanceFromActive < 15;
+            // Find the section index for this milestone
+            const sectionIndex = SECTION_IDS.indexOf(milestone.section);
+            const isActive = sectionIndex !== -1 && activeSectionIndex >= sectionIndex;
+            const isCurrent = sectionIndex !== -1 && activeSectionIndex === sectionIndex;
+            const isPassed = sectionIndex !== -1 && activeSectionIndex > sectionIndex;
             
             return (
               <div 
                 key={index} 
-                className={`milestone-node ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''} ${isNear ? 'near' : ''}`}
+                className={`milestone-node ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''} ${isCurrent ? 'current' : ''}`}
                 style={{ 
-                  top: `${6 + (index * 12.5)}%`,
+                  top: `${8 + (index * 13)}%`,
                   '--milestone-color': milestone.color,
-                  '--pulse-delay': `${index * 0.2}s`
+                  cursor: 'pointer'
                 }}
+                onClick={() => scrollToSection(milestone.section)}
+                title={`Go to ${milestone.label}`}
               >
-                {/* Connector line to content */}
-                <div className={`milestone-connector ${isActive ? 'active' : ''}`}></div>
-                
-                {/* Outer ring animation */}
-                <div className="milestone-ring-outer"></div>
-                <div className="milestone-ring-pulse"></div>
-                
                 {/* Main dot */}
                 <div className="milestone-dot">
                   <div className="milestone-dot-inner">
                     <span className="milestone-icon">{milestone.icon}</span>
                   </div>
-                  {/* Shine effect */}
-                  <div className="milestone-shine"></div>
                 </div>
                 
-                {/* Label with background */}
+                {/* Label */}
                 <div className="milestone-label-container">
                   <span className="milestone-label">{milestone.label}</span>
-                  <span className="milestone-progress">{Math.round(nodeProgress)}%</span>
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {/* Current position indicator */}
-        <div 
-          className="journey-current-marker"
-          style={{ top: `${6 + (scrollProgress * 0.88)}%` }}
-        >
-          <div className="current-marker-dot"></div>
-          <div className="current-marker-pulse"></div>
         </div>
       </div>
 
@@ -369,8 +260,6 @@ export default function StudentDashboard() {
 
         {/* PROFILE SECTION */}
         <div className="sd-profile-card sd-animate-card" data-section="profile">
-          <div className="card-glow"></div>
-          <div className="glacier-sweep"></div>
           
           <div className="profile-header">
             <div className="profile-avatar">
@@ -388,13 +277,6 @@ export default function StudentDashboard() {
 
           <div className="profile-details">
             <div className="profile-detail-item">
-              <span className="detail-icon">🆔</span>
-              <div className="detail-content">
-                <span className="detail-label">User ID</span>
-                <span className="detail-value">{user.userCode}</span>
-              </div>
-            </div>
-            <div className="profile-detail-item">
               <span className="detail-icon">📧</span>
               <div className="detail-content">
                 <span className="detail-label">Email</span>
@@ -405,14 +287,11 @@ export default function StudentDashboard() {
               <span className="detail-icon">🎓</span>
               <div className="detail-content">
                 <span className="detail-label">Branch</span>
-                <span className="detail-value">{user.branchName}</span>
+                <span className="detail-value">{user.branchName || user.branch || 'N/A'}</span>
               </div>
             </div>
           </div>
 
-          <button className="profile-edit-btn" onClick={() => navigate("/student/profile")}>
-            <span>✏️</span> Edit Profile
-          </button>
         </div>
 
         {/* STATS SECTION */}
@@ -527,7 +406,7 @@ export default function StudentDashboard() {
   <p>
     View detailed breakdown of your performance by skill.
   </p>
-  <button onClick={() => navigate("/student/skills")}>
+  <button className="sd-action-btn primary" onClick={() => navigate("/student/skills")}>
     View Skill Analysis
   </button>
 </div>
@@ -540,7 +419,7 @@ export default function StudentDashboard() {
               Attempt the career assessment to discover your strengths
               and suitable career paths.
             </p>
-            <button onClick={() => navigate("/student/assessments")}>
+            <button className="sd-action-btn primary" onClick={() => navigate("/student/assessments")}>
               Start Assessment
             </button>
           </div>
@@ -551,54 +430,51 @@ export default function StudentDashboard() {
             <p>
               View your completed assessments and performance analysis.
             </p>
-            <button onClick={() => navigate(`/student/results/${user.id}`)}>
+            <button className="sd-action-btn primary" onClick={() => navigate(`/student/results/${user.id}`)}>
               View Results
+            </button>
+          </div>
+
+          <div className="sd-card">
+            <div className="card-glow"></div>
+            <h3>Career Recommendations</h3>
+            <p>
+              Explore career paths that match your skills and interests.
+            </p>
+            <button className="sd-action-btn primary" onClick={() => navigate("/student/career-recommendations")}>
+              View Careers
+            </button>
+          </div>
+
+          <div className="sd-card">
+            <div className="card-glow"></div>
+            <h3>Personality Tests</h3>
+            <p>
+              Discover your personality traits and how they align with careers.
+            </p>
+            <button className="sd-action-btn primary" onClick={() => navigate("/student/personality-tests")}>
+              Take Test
             </button>
           </div>
 
         </div>
 
-        {/* RECENT ATTEMPTS */}
-        <div className="sd-attempts-card sd-animate-card" data-section="history">
+        {/* HISTORY BUTTON */}
+        <div className="sd-history-card sd-animate-card" data-section="history">
           <div className="card-glow"></div>
           <div className="glacier-sweep"></div>
           
-          <div className="attempts-header">
-            <h3>📜 Recent Attempts</h3>
-            <span className="attempts-count">{history.length} total</span>
+          <div className="history-content">
+            <span className="history-icon">📜</span>
+            <h3>Assessment History</h3>
+            <p>View all your past assessment attempts and scores</p>
+            <button 
+              className="history-btn"
+              onClick={() => navigate("/student/history")}
+            >
+              View History
+            </button>
           </div>
-
-          {history.length > 0 ? (
-            <div className="attempts-list">
-              {history.slice(0, 3).map((item, index) => {
-                const scoreClass = item.percentage >= 80 ? 'excellent' : 
-                                   item.percentage >= 60 ? 'good' : 
-                                   item.percentage >= 40 ? 'average' : 'needs-work';
-                return (
-                  <div key={index} className={`attempt-item ${scoreClass}`}>
-                    <div className="attempt-rank">#{index + 1}</div>
-                    <div className="attempt-info">
-                      <span className="attempt-title">{item.assessmentTitle}</span>
-                      <div className="attempt-score-bar">
-                        <div 
-                          className="score-fill" 
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="attempt-percentage">
-                      {item.percentage.toFixed(1)}%
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="attempts-empty">
-              <span className="empty-icon">📝</span>
-              <p>No assessments attempted yet.</p>
-            </div>
-          )}
         </div>
 
       </div>

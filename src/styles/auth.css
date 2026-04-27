@@ -332,6 +332,103 @@
   border-color: rgba(99, 102, 241, 0.25);
 }
 
+.password-field {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.password-field .auth-form input,
+.password-field input {
+  padding-right: 54px;
+  margin-bottom: 0;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--auth-text-secondary);
+  padding: 6px;
+  border-radius: 999px;
+  transition: var(--auth-transition);
+}
+
+.password-toggle:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--auth-primary);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.4);
+  outline-offset: 2px;
+}
+
+.captcha-box {
+  margin-bottom: 18px;
+}
+
+.captcha-challenge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.captcha-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--auth-text-secondary);
+}
+
+.captcha-question {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--auth-text-primary);
+  font-family: "Courier New", monospace;
+  letter-spacing: 3px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  user-select: none;
+}
+
+.captcha-refresh {
+  margin-left: auto;
+  border: none;
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--auth-primary), var(--auth-primary-dark));
+  transition: var(--auth-transition);
+}
+
+.captcha-refresh:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+}
+
+.captcha-error {
+  margin-top: -6px;
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
 /* ================= BUTTON ================= */
 
 .auth-btn {

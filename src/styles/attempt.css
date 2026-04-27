@@ -1,9 +1,17 @@
 .exam-wrapper {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg,#f4f6ff,#eef2ff);
   font-family: 'Inter', sans-serif;
+  z-index: 9000;
+  overflow: hidden;
 }
 
 /* ================= HEADER ================= */
@@ -15,22 +23,38 @@
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  color: #1f2937;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .exam-title {
   font-weight: 600;
   font-size: 18px;
+  color: #0f172a;
+  max-width: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.exam-progress span {
+.exam-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exam-progress .progress-text {
   font-size: 14px;
-  margin-bottom: 6px;
-  display: block;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
 }
 
 .progress-bar {
-  width: 220px;
-  height: 6px;
+  width: 120px;
+  height: 8px;
   background: #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
@@ -67,6 +91,7 @@
   font-size: 22px;
   margin-bottom: 35px;
   font-weight: 600;
+  color: #0f172a;
 }
 
 /* ================= OPTIONS ================= */
@@ -95,6 +120,7 @@
 .option-letter {
   width: 34px;
   height: 34px;
+  min-width: 34px;
   border-radius: 50%;
   background: #e0e7ff;
   color: #4338ca;       /* darker purple text */
@@ -103,6 +129,13 @@
   align-items: center;
   font-weight: 700;
   font-size: 14px;
+  flex-shrink: 0;
+}
+
+.option-text {
+  flex: 1;
+  text-align: left;
+  color: #1f2937;
 }
 
 .option-btn:hover {
@@ -126,6 +159,9 @@
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .nav-group {
@@ -138,6 +174,7 @@
   border-radius: 12px;
   border: 1px solid #d1d5db;
   background: white;
+  color: #374151;
   cursor: pointer;
   transition: 0.3s ease;
 }
@@ -146,13 +183,18 @@
   background: #f3f4ff;
 }
 
-.primary-btn {
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exam-footer .primary-btn {
   background: linear-gradient(135deg,#5a4bff,#7c6cff);
   color: white;
   border: none;
 }
 
-.primary-btn:hover {
+.exam-footer .primary-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(90,75,255,0.3);
 }
@@ -160,4 +202,55 @@
 .exit-btn {
   border: 1px solid #ef4444;
   color: #ef4444;
+  background: white;
+}
+
+.exit-btn:hover {
+  background: #fef2f2;
+}
+
+.exam-feedback {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  animation: examFadeIn 0.25s ease;
+}
+
+.exam-feedback.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.exam-feedback.success {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.exam-feedback.warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.exam-feedback-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+@keyframes examFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

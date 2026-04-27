@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFacultyAssessments } from "../services/api";
+import { getFacultyAssessments, getAssessmentResults } from "../services/api";
 import "../styles/facultydashboard.css";
 
 export default function FacultyResults() {
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const [assessments, setAssessments] = useState([]);
+  const [submissionCounts, setSubmissionCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -18,7 +19,23 @@ export default function FacultyResults() {
       try {
         setLoading(true);
         const res = await getFacultyAssessments(user.id);
-        setAssessments(res.data);
+        const assessmentsData = res.data;
+        setAssessments(assessmentsData);
+
+        // Fetch submission counts for each assessment
+        const counts = {};
+        await Promise.all(
+          assessmentsData.map(async (assessment) => {
+            try {
+              const resultsRes = await getAssessmentResults(assessment.id);
+              counts[assessment.id] = resultsRes.data?.length || 0;
+            } catch {
+              counts[assessment.id] = 0;
+            }
+          })
+        );
+        setSubmissionCounts(counts);
+
       } catch (error) {
         console.error("Error loading assessments", error);
       } finally {
@@ -48,7 +65,7 @@ export default function FacultyResults() {
             </div>
             <div className="fd-stat-card">
               <div className="fd-stat-value">
-                {assessments.reduce((sum, a) => sum + (a.submissionCount || 0), 0)}
+                {Object.values(submissionCounts).reduce((sum, count) => sum + count, 0)}
               </div>
               <div className="fd-stat-label">Submissions</div>
             </div>
@@ -135,7 +152,7 @@ export default function FacultyResults() {
                       fontWeight: '700',
                       color: 'var(--fd-success)'
                     }}>
-                      {assessment.submissionCount || '--'}
+                      {submissionCounts[assessment.id] !== undefined ? submissionCounts[assessment.id] : '--'}
                     </div>
                     <div style={{ 
                       fontSize: '11px', 

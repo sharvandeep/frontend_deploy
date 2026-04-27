@@ -168,6 +168,19 @@ export default function AssessmentResults() {
                 View Answers
               </button>
 
+              <button
+                className="secondary-btn submit-review-btn"
+                style={{ marginTop: '10px', width: '100%' }}
+                onClick={() =>
+                  navigate(`/faculty/add-remark/${student.studentId}/${assessmentId}`)
+                }
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Submit Review
+              </button>
+
             </div>
           ))}
         </div>

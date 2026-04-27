@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getAssessmentQuestions,
-  submitAssessment
+  submitAssessment,
+  getStudentAssessments,
+  getStudentHistory,
 } from "../services/api";
 import "../styles/attempt.css";
 
@@ -16,26 +18,53 @@ export default function AttemptAssessment() {
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [assessmentTitle, setAssessmentTitle] = useState("Assessment");
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [existingAttempt, setExistingAttempt] = useState(null);
 
   // ==========================
-  // Load Questions
+  // Load Questions and Assessment Info
   // ==========================
   useEffect(() => {
 
-    const loadQuestions = async () => {
+    const loadData = async () => {
       try {
-        const res = await getAssessmentQuestions(assessmentId);
-        setQuestions(res.data);
+        // Fetch questions
+        const [questionsRes, historyRes] = await Promise.all([
+          getAssessmentQuestions(assessmentId),
+          user?.id ? getStudentHistory(user.id) : Promise.resolve({ data: [] }),
+        ]);
+
+        setQuestions(questionsRes.data || []);
+
+        const attempt = (historyRes.data || []).find(
+          item => item.assessmentId === parseInt(assessmentId)
+        );
+        if (attempt) {
+          setExistingAttempt(attempt);
+        }
+
+        // Fetch assessment title
+        if (user?.id) {
+          const assessmentsRes = await getStudentAssessments(user.id);
+          const currentAssessment = assessmentsRes.data.find(
+            a => a.id === parseInt(assessmentId)
+          );
+          if (currentAssessment) {
+            setAssessmentTitle(currentAssessment.title);
+          }
+        }
       } catch (error) {
-        console.error("Error loading questions", error);
+        console.error("Error loading data", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadQuestions();
+    loadData();
 
-  }, [assessmentId]);
+  }, [assessmentId, user?.id]);
 
   // ==========================
   // Handle Option Select
@@ -52,9 +81,11 @@ export default function AttemptAssessment() {
   // ==========================
   const handleNext = () => {
     if (!answers[questions[currentIndex].id]) {
-      alert("Please select an answer before proceeding.");
+      setFeedback({ type: "error", message: "Please select an answer before proceeding." });
       return;
     }
+
+    setFeedback({ type: "", message: "" });
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -74,12 +105,28 @@ export default function AttemptAssessment() {
   // ==========================
   const handleSubmit = async () => {
 
+    if (existingAttempt) {
+      setFeedback({ type: "error", message: "You already attempted this assessment. Review your previous result." });
+      return;
+    }
+
+    const unanswered = questions.filter(q => !answers[q.id]);
+    if (unanswered.length > 0) {
+      setFeedback({
+        type: "error",
+        message: `Please answer all questions before submitting. ${unanswered.length} question(s) remaining.`,
+      });
+      return;
+    }
+
     const formattedAnswers = Object.keys(answers).map(qId => ({
       questionId: parseInt(qId),
       selectedAnswer: answers[qId]
     }));
 
     try {
+      setSubmitting(true);
+      setFeedback({ type: "", message: "" });
 
       const res = await submitAssessment({
         studentId: user.id,
@@ -87,18 +134,73 @@ export default function AttemptAssessment() {
         answers: formattedAnswers
       });
 
-      alert(
-        `Score: ${res.data.correctAnswers}/${res.data.totalQuestions}\nPercentage: ${res.data.percentage.toFixed(2)}%`
-      );
+      setFeedback({
+        type: "success",
+        message: `Assessment Submitted Successfully. Score: ${res.data.correctAnswers}/${res.data.totalQuestions} (${res.data.percentage.toFixed(2)}%)`,
+      });
 
-      navigate("/student-dashboard");
+      setTimeout(() => {
+        navigate("/student-dashboard", { state: { refresh: Date.now() } });
+      }, 1400);
 
     } catch (error) {
-      alert(error.response?.data?.message || "Submission failed");
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Submission failed. Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <h2>Loading Questions...</h2>;
+  if (loading) {
+    return (
+      <div className="exam-wrapper">
+        <div className="exam-header">
+          <div className="exam-title">Assessment</div>
+          <div className="exam-progress">
+            <span>Loading...</span>
+          </div>
+        </div>
+        <div className="exam-content">
+          <div className="question-box">
+            <h3>Loading Questions...</h3>
+          </div>
+        </div>
+        <div className="exam-footer">
+          <button className="nav-btn exit-btn" onClick={() => navigate("/student-dashboard")}>
+            Exit
+          </button>
+          <div className="nav-group"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="exam-wrapper">
+        <div className="exam-header">
+          <div className="exam-title">Assessment</div>
+          <div className="exam-progress">
+            <span>No Questions</span>
+          </div>
+        </div>
+        <div className="exam-content">
+          <div className="question-box">
+            <h3>No questions found for this assessment.</h3>
+            <p style={{ color: '#64748b', marginTop: '12px' }}>Please contact your faculty.</p>
+          </div>
+        </div>
+        <div className="exam-footer">
+          <button className="nav-btn exit-btn" onClick={() => navigate("/student-dashboard")}>
+            Exit
+          </button>
+          <div className="nav-group"></div>
+        </div>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentIndex];
 
@@ -106,21 +208,22 @@ export default function AttemptAssessment() {
     <div className="exam-wrapper">
 
       {/* HEADER */}
-      <div className="exam-header">
-        <div className="exam-title">
-          Assessment
+      <div className="exam-header" style={{ background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="exam-title" style={{ background: 'transparent', fontWeight: 600, fontSize: '18px', color: '#0f172a' }}>
+          {assessmentTitle}
         </div>
 
-        <div className="exam-progress">
-          <span>
-            Question {currentIndex + 1} / {questions.length}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+            {currentIndex + 1}/{questions.length}
           </span>
-
-          <div className="progress-bar">
+          <div style={{ width: '100px', height: '8px', background: '#e5e7eb', borderRadius: '10px', overflow: 'hidden' }}>
             <div
-              className="progress-fill"
               style={{
-                width: `${((currentIndex + 1) / questions.length) * 100}%`
+                height: '100%',
+                width: `${((currentIndex + 1) / questions.length) * 100}%`,
+                background: 'linear-gradient(135deg, #5a4bff, #7c6cff)',
+                transition: 'width 0.3s ease'
               }}
             />
           </div>
@@ -132,15 +235,52 @@ export default function AttemptAssessment() {
 
         <div className="question-box">
 
+          {feedback.message && (
+            <div className={`exam-feedback ${feedback.type === "success" ? "success" : "error"}`}>
+              {feedback.message}
+            </div>
+          )}
+
+          {existingAttempt && (
+            <div className="exam-feedback warning">
+              You already attempted this assessment on {new Date(existingAttempt.submittedAt).toLocaleString()}. Duplicate attempts are disabled.
+              <div className="exam-feedback-actions">
+                <button
+                  className="nav-btn"
+                  onClick={() => navigate(`/student/review/${assessmentId}/${user.id}`)}
+                >
+                  View Previous Review
+                </button>
+                <button
+                  className="nav-btn"
+                  onClick={() => navigate("/student/assessments")}
+                >
+                  Back to Assessments
+                </button>
+              </div>
+            </div>
+          )}
+
           <h3>
-            {currentIndex + 1}. {currentQuestion.questionText}
+            {currentIndex + 1}. {currentQuestion.questionText || currentQuestion.question || currentQuestion.text || "Question"}
           </h3>
 
           <div className="options-container">
-            {["A", "B", "C", "D"].map(letter => {
+            {["A", "B", "C", "D"].map((letter, index) => {
 
-              const optionValue =
-                currentQuestion["option" + letter.toLowerCase()];
+              // Try multiple possible field names
+              let optionValue = 
+                currentQuestion[`option${letter}`] || 
+                currentQuestion[`option${letter.toLowerCase()}`] ||
+                currentQuestion[`option_${letter.toLowerCase()}`] ||
+                currentQuestion[letter.toLowerCase()] ||
+                currentQuestion[letter] ||
+                "";
+              
+              // Check if options are in an array
+              if (!optionValue && currentQuestion.options && Array.isArray(currentQuestion.options)) {
+                optionValue = currentQuestion.options[index] || "";
+              }
 
               return (
                 <button
@@ -151,7 +291,7 @@ export default function AttemptAssessment() {
                   onClick={() => handleSelect(currentQuestion.id, letter)}
                 >
                   <span className="option-letter">{letter}</span>
-                  {optionValue}
+                  <span className="option-text">{optionValue || `Option ${letter}`}</span>
                 </button>
               );
             })}
@@ -184,8 +324,11 @@ export default function AttemptAssessment() {
           <button
             className="nav-btn primary-btn"
             onClick={handleNext}
+            disabled={submitting || !!existingAttempt}
           >
-            {currentIndex === questions.length - 1
+            {submitting
+              ? "Submitting..."
+              : currentIndex === questions.length - 1
               ? "Submit"
               : "Next"}
           </button>

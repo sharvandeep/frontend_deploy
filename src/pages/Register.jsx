@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
 import "../styles/auth.css";
 
 export default function Register() {
 
+  const navigate = useNavigate();
+
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -14,17 +17,52 @@ export default function Register() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // If role changes to FACULTY, keep branch enabled
+    // If needed later you can customize logic here
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
     try {
       await registerUser(form);
-      alert("Registered Successfully");
+
+      setSuccessMessage("Registered Successfully! Redirecting to login...");
+
+      // Optional: Clear form
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "STUDENT",
+        branchName: "CSE"
+      });
+
+      // Redirect after short delay
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+
+    } catch (error) {
+
+      // Extract backend message safely
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Something went wrong. Please try again.";
+
+      setErrorMessage(backendMessage);
+
     } finally {
       setIsSubmitting(false);
     }
@@ -32,6 +70,7 @@ export default function Register() {
 
   return (
     <div className="auth-wrapper">
+
       {/* LEFT BRAND PANEL */}
       <div className="auth-left">
         <div className="auth-left-content">
@@ -41,52 +80,20 @@ export default function Register() {
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
           </div>
-          <h1>CareerAssess</h1>
+          <h1>Career-Compass</h1>
           <p>
             Create your account.<br />
             Start your career journey.<br />
             Unlock your potential.
           </p>
-          <div className="auth-features">
-            <div className="feature-item">
-              <div className="feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span>Skill Assessment</span>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <span>Progress Tracking</span>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span>Instant Results</span>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* RIGHT REGISTER PANEL */}
       <div className="auth-right">
         <div className="login-card register-card">
+
           <div className="card-header">
-            <div className="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M19 8v6M22 11h-6" />
-              </svg>
-            </div>
             <h2 className="auth-title">Create Account</h2>
             <p className="auth-subtitle">
               Join the platform and explore career insights
@@ -94,106 +101,118 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="auth-form register-form">
-            <div className="input-group">
-              <div className="input-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
+
+            {/* ERROR MESSAGE */}
+            {errorMessage && (
+              <div style={{
+                color: "#ff4d4f",
+                background: "#fff1f0",
+                padding: "10px",
+                borderRadius: "6px",
+                marginBottom: "10px",
+                fontSize: "14px"
+              }}>
+                {errorMessage}
               </div>
+            )}
+
+            {/* SUCCESS MESSAGE */}
+            {successMessage && (
+              <div style={{
+                color: "#389e0d",
+                background: "#f6ffed",
+                padding: "10px",
+                borderRadius: "6px",
+                marginBottom: "10px",
+                fontSize: "14px"
+              }}>
+                {successMessage}
+              </div>
+            )}
+
+            <div className="input-group">
               <input
                 name="name"
                 placeholder="Full Name"
+                value={form.name}
                 onChange={handleChange}
                 required
               />
             </div>
 
             <div className="input-group">
-              <div className="input-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <path d="M22 6l-10 7L2 6" />
-                </svg>
-              </div>
               <input
                 name="email"
                 type="email"
                 placeholder="Email Address"
+                value={form.email}
                 onChange={handleChange}
                 required
               />
             </div>
 
-            <div className="input-group">
-              <div className="input-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
+            <div className="input-group password-group">
+              <div className="password-field">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
               </div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                onChange={handleChange}
-                required
-              />
             </div>
 
             <div className="select-row">
+
               <div className="select-group">
                 <label>Role</label>
-                <div className="select-wrapper">
-                  <select name="role" onChange={handleChange}>
-                    <option value="STUDENT">🎓 Student</option>
-                    <option value="FACULTY">👨‍🏫 Faculty</option>
-                  </select>
-                  <div className="select-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </div>
-                </div>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                >
+                  <option value="STUDENT">🎓 Student</option>
+                  <option value="FACULTY">👨‍🏫 Faculty</option>
+                </select>
               </div>
 
               <div className="select-group">
                 <label>Branch</label>
-                <div className="select-wrapper">
-                  <select name="branchName" onChange={handleChange}>
-                    <option value="CSE">CSE</option>
-                    <option value="ECE">ECE</option>
-                    <option value="CSIT">CSIT</option>
-                    <option value="AIDS">AIDS</option>
-                    <option value="MECH">MECH</option>
-                    <option value="BIO-TECH">BIO-TECH</option>
-                  </select>
-                  <div className="select-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </div>
-                </div>
+                <select
+                  name="branchName"
+                  value={form.branchName}
+                  onChange={handleChange}
+                >
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="CSIT">CSIT</option>
+                  <option value="AIDS">AIDS</option>
+                  <option value="MECH">MECH</option>
+                  <option value="BIO-TECH">BIO-TECH</option>
+                </select>
               </div>
+
             </div>
 
-            <button type="submit" className="auth-btn" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <span className="btn-loading">
-                  <span className="spinner"></span>
-                  Creating Account...
-                </span>
-              ) : (
-                <span className="btn-content">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M19 8v6M22 11h-6" />
-                  </svg>
-                  Create Account
-                </span>
-              )}
+            <button
+              type="submit"
+              className="auth-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating Account..." : "Create Account"}
             </button>
+
           </form>
 
           <div className="auth-footer">
@@ -201,9 +220,6 @@ export default function Register() {
             <Link to="/login">Sign In</Link>
           </div>
 
-          <div className="auth-divider">
-            <span>Secure & Encrypted</span>
-          </div>
         </div>
       </div>
     </div>

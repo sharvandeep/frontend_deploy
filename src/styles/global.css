@@ -14,42 +14,21 @@ html, body, #root {
 body {
   font-family: 'Inter', sans-serif;
   background: #f4f6f9;
-  cursor: none; /* Hide default cursor */
+  cursor: auto;
 }
 
-/* ================= BUTTON ================= */
-
-button {
-  padding: 12px 22px;
-  border-radius: 40px;
-  border: none;
-  font-weight: 600;
-  background: linear-gradient(135deg,#5a4bff,#7c6cff,#9d8dff);
-  background-size: 200% 200%;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s ease;
+body.custom-cursor-enabled {
+  cursor: none;
 }
 
-button:hover {
-  transform: translateY(-4px) scale(1.05);
-  background-position: right center;
-  box-shadow: 0 12px 30px rgba(90,75,255,0.4);
-}
-
-button:active {
-  transform: scale(0.96);
-}
-
-/* ================= INPUT ================= */
-
-input, select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 16px;
+body.custom-cursor-enabled a,
+body.custom-cursor-enabled button,
+body.custom-cursor-enabled input,
+body.custom-cursor-enabled select,
+body.custom-cursor-enabled textarea,
+body.custom-cursor-enabled label,
+body.custom-cursor-enabled [role="button"] {
+  cursor: none !important;
 }
 
 /* ================= CUSTOM CURSOR ================= */
@@ -58,38 +37,121 @@ input, select {
   position: fixed;
   top: 0;
   left: 0;
+  width: 0;
+  height: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-100px, -100px, 0);
   z-index: 9999;
+  will-change: transform;
+  transition: opacity 0.18s ease, filter 0.18s ease;
+  opacity: 0.98;
+  filter: saturate(1.15);
+}
+
+.custom-cursor.cursor-hidden {
+  opacity: 0;
 }
 
 .cursor-dot {
-  width: 6px;
-  height: 6px;
-  background: #5a4bff;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
   border-radius: 50%;
   position: absolute;
-  top: -3px;
-  left: -3px;
-  transition: 0.3s ease;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.9), 0 0 26px rgba(79, 70, 229, 0.5), 0 0 44px rgba(99, 102, 241, 0.24);
+  transition: transform 0.18s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.cursor-dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(238, 242, 255, 0.35) 45%, transparent 72%);
+  filter: blur(1px);
+  animation: dotBreathe 1.7s ease-in-out infinite;
 }
 
 .cursor-box {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   position: absolute;
-  top: -14px;
-  left: -14px;
-  transition: all 0.3s ease;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .cursor-box::before {
   content: "";
   position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 2px solid #7c6cff;
-  animation: rotateBox 4s linear infinite;
+  inset: -1px;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 40deg, rgba(34, 211, 238, 0.88), rgba(99, 102, 241, 0.96), rgba(167, 139, 250, 0.9), rgba(34, 211, 238, 0.88)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: inset 0 0 14px rgba(129, 140, 248, 0.22), 0 0 20px rgba(79, 70, 229, 0.34);
+  animation: rotateBox 2.8s linear infinite;
+}
+
+.cursor-box::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 70, 229, 0.24);
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.22) 0%, rgba(79, 70, 229, 0.06) 52%, transparent 76%);
+  filter: blur(1.2px);
+  animation: auraPulse 2.4s ease-in-out infinite;
+}
+
+.cursor-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.cursor-orbit::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c6cff, #22d3ee);
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.42);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cursor-orbit-one {
+  animation: orbitSpin 2.2s linear infinite;
+}
+
+.cursor-orbit-one::before {
+  transform: translate(20px, -50%);
+}
+
+.cursor-orbit-two {
+  animation: orbitSpinReverse 3.1s linear infinite;
+}
+
+.cursor-orbit-two::before {
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg, #67e8f9, #6366f1);
+  transform: translate(27px, -50%);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.44);
 }
 
 @keyframes rotateBox {
@@ -97,14 +159,74 @@ input, select {
   to { transform: rotate(360deg); }
 }
 
+@keyframes auraPulse {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes dotBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.14); opacity: 1; }
+}
+
+@keyframes orbitSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes orbitSpinReverse {
+  from { transform: translate(-50%, -50%) rotate(360deg); }
+  to { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
 /* Hover state */
 .custom-cursor.cursor-hover .cursor-box {
-  width: 45px;
-  height: 45px;
-  box-shadow: 0 0 20px rgba(90,75,255,0.6);
+  transform: translate(-50%, -50%) scale(1.28);
+  box-shadow: 0 0 42px rgba(79, 70, 229, 0.55), 0 0 68px rgba(34, 211, 238, 0.24);
 }
 
 .custom-cursor.cursor-hover .cursor-dot {
-  transform: scale(1.4);
-  background: #7c6cff;
+  transform: translate(-50%, -50%) scale(1.15);
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.98), 0 0 30px rgba(79, 70, 229, 0.58), 0 0 52px rgba(99, 102, 241, 0.32);
+}
+
+.custom-cursor.cursor-hover .cursor-box::before {
+  animation-duration: 1.55s;
+}
+
+.custom-cursor.cursor-hover .cursor-box::after {
+  animation-duration: 1.25s;
+}
+
+.custom-cursor.cursor-hover .cursor-orbit-one {
+  animation-duration: 1.35s;
+}
+
+.custom-cursor.cursor-hover .cursor-orbit-two {
+  animation-duration: 2s;
+}
+
+.custom-cursor.cursor-hover .cursor-orbit::before {
+  transform: translate(30px, -50%);
+}
+
+.custom-cursor.cursor-hover .cursor-orbit-two::before {
+  transform: translate(36px, -50%);
+}
+
+.custom-cursor.cursor-active .cursor-box {
+  transform: translate(-50%, -50%) scale(0.88);
+}
+
+.custom-cursor.cursor-active .cursor-dot {
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.custom-cursor.cursor-active .cursor-orbit::before {
+  transform: translate(18px, -50%);
+}
+
+.custom-cursor.cursor-active .cursor-box::after {
+  opacity: 0.65;
 }
