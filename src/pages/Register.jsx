@@ -35,7 +35,10 @@ export default function Register() {
     setSuccessMessage("");
 
     try {
-      await registerUser(form);
+      await registerUser({
+  ...form,
+  role: form.role.toUpperCase()
+});
 
       setSuccessMessage("Registered Successfully! Redirecting to login...");
 
