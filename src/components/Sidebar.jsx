@@ -4,10 +4,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
 
   const logout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     navigate("/login");
   };
 

@@ -6,7 +6,7 @@ import "../styles/student-skills.css";
 export default function StudentSkillAnalysis() {
 
   const navigate = useNavigate();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user")) || {}, []);
+  const user = useMemo(() => JSON.parse(sessionStorage.getItem("user")) || {}, []);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
 

@@ -16,7 +16,7 @@ export default function StudentAssessments() {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   useEffect(() => {
 

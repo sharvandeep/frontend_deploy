@@ -6,7 +6,7 @@ import { getFacultyAssessments, getAssessmentResults } from "../services/api";
 export default function FacultyDashboard() {
 
   const navigate = useNavigate();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user")) || {}, []);
+  const user = useMemo(() => JSON.parse(sessionStorage.getItem("user")) || {}, []);
 
   const [assessments, setAssessments] = useState([]);
   const [allResults, setAllResults] = useState([]);

@@ -13,7 +13,7 @@ import "../styles/admin.css";
 export default function AdminCareerPaths() {
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   const [careerPaths, setCareerPaths] = useState([]);
   const [branches, setBranches] = useState([]);

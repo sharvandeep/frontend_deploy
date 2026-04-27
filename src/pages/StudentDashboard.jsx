@@ -20,7 +20,7 @@ const SECTION_IDS = ['profile', 'stats', 'performance', 'skills', 'actions', 'hi
 export default function StudentDashboard() {
 
   const navigate = useNavigate();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user")) || {}, []);
+  const user = useMemo(() => JSON.parse(sessionStorage.getItem("user")) || {}, []);
 
   const [history, setHistory] = useState([]);
   const [chartData, setChartData] = useState([]);

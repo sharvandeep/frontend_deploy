@@ -14,7 +14,7 @@ function TakePersonalityTest() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
 
   const likertOptions = [
     { value: 1, label: "Strongly Disagree", emoji: "😟" },

@@ -6,7 +6,7 @@ import "../styles/admin.css";
 export default function AdminUsers() {
 
   const navigate = useNavigate();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "null"), []);
+  const user = useMemo(() => JSON.parse(sessionStorage.getItem("user") || "null"), []);
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);

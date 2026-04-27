@@ -6,7 +6,7 @@ import "../styles/studentdashboard.css";
 export default function Assessment() {
   const { assessmentId } = useParams();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   const [questionCount, setQuestionCount] = useState(0);
   const [previousAttempt, setPreviousAttempt] = useState(null);

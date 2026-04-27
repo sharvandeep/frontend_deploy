@@ -5,7 +5,7 @@ import "../styles/facultydashboard.css";
 
 export default function FacultyResults() {
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
   const [assessments, setAssessments] = useState([]);
   const [submissionCounts, setSubmissionCounts] = useState({});
   const [loading, setLoading] = useState(true);

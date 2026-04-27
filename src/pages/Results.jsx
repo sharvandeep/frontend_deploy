@@ -5,7 +5,7 @@ import { getSkillAnalysis, getStudentResults } from "../services/api";
 
 export default function Results() {
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [skills, setSkills] = useState([]);

@@ -6,7 +6,7 @@ import "../styles/admin.css";
 export default function AdminDashboard() {
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   const [stats, setStats] = useState({
     totalStudents: 0,

@@ -18,7 +18,7 @@ export default function StudentResultReport() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   useEffect(() => {
     const loadReport = async () => {

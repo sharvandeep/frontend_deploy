@@ -9,7 +9,7 @@ function PersonalityTests() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(sessionStorage.getItem("user"));
 
   useEffect(() => {
     if (!user || user.role !== "STUDENT") {

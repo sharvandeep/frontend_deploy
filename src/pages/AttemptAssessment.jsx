@@ -12,7 +12,7 @@ export default function AttemptAssessment() {
 
   const { assessmentId } = useParams();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});

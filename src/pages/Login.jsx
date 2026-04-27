@@ -67,12 +67,12 @@ export default function Login() {
       const userRole = String(user?.role || "").toUpperCase();
 
       if (userRole !== selectedRole) {
-        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
         alert("Selected role does not match these credentials.");
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("user", JSON.stringify(user));
 
       if (userRole === "STUDENT") {
         navigate("/student-dashboard");

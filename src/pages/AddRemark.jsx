@@ -6,7 +6,7 @@ import "../styles/addremark.css";
 export default function AddRemark() {
   const { studentId, assessmentId } = useParams();
   const navigate = useNavigate();
-  const faculty = JSON.parse(localStorage.getItem("user"));
+  const faculty = JSON.parse(sessionStorage.getItem("user"));
   const [remark, setRemark] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);

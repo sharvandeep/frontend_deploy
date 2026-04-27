@@ -5,7 +5,7 @@ import "../styles/studentdashboard.css";
 
 export default function StudentCareerRecommendations() {
   const navigate = useNavigate();
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user")) || {}, []);
+  const user = useMemo(() => JSON.parse(sessionStorage.getItem("user")) || {}, []);
 
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
